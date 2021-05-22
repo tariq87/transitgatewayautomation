@@ -112,8 +112,24 @@ class Gateway():
             print("Something bad happend", e)
 
 
-    def createAttachments(self,vpcid):
-        pass
+    def createAttachments(self,gatewayid,vpcid,subnetid):
+        try:
+            res = self.client.create_transit_gateway_vpc_attachment(
+                TransitGatewayId=gatewayid,
+                VpcId=vpcid,
+                SubnetIds=subnetid,
+                TagSpecifications=[
+                    {
+                        ResourceType:'transit-gateway-attachment',
+                        Tags: [
+                            'Key': 'Name'
+                            'Value': 
+                        ]
+                    }
+                ]
+            )
+        except Exception as e:
+            print(f"something bad happend {e}")
 
     def disassociateVpcFromDefault(self):
         pass
@@ -142,9 +158,10 @@ if __name__ == '__main__':
 
             else:
                 print("Transit Gateway creation in progress")
-                time.sleep(5)
+                time.sleep(10)
     elif args.secdo is not None and args.transitgateway is not None:
         print("creating security domain")
+        r = redis.Redis(db=1)
         gatewayid = r.get(args.transitgateway).decode('utf-8')
         if gatewayid:
             rt = c.createSecurityDomain(args.secdo, gatewayid)
