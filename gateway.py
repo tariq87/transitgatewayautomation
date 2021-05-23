@@ -4,7 +4,7 @@ import argparse
 import time
 import redis
 import random
-import attachments
+import helper
 from redis import ConnectionError
 
 
@@ -18,14 +18,14 @@ myparser.add_argument('--transitgateway', metavar='transitgateway', type=str, he
 myparser.add_argument('--vpcname', metavar='vpcname', type=str, help='Name of VPC')
 args = myparser.parse_args()
 
-
+cache = redis.Redis(host="localhost", db=1)
 class Gateway():
     """ Intializing boto and redis connections """
     def __init__(self, region):
         try:
             self.session = boto3.Session()
             self.region = region
-            self.cache = redis.Redis(host="localhost", db=1)
+            #self.cache = redis.Redis(host="localhost", db=1)
             self.client = self.session.client('ec2', region_name=self.region)
             #print(f"Created Sessions With AWS in Region {self.region}")
         except Exception as e:
@@ -52,10 +52,10 @@ class Gateway():
             )
             _tgrtid = res['TransitGatewayRouteTable']['TransitGatewayRouteTableId']
             _tgrtname = res['TransitGatewayRouteTable']['Tags'][0]['Value']
-            self.cache.set(_tgrtname,_tgrtid)
+            cache.set(_tgrtname,_tgrtid)
             return res
         except Exception as e:
-            print("Something bad happened", e)
+            print(e)
 
     """ function to get creation status of route table """
     def getTransitGatewayRouteTableStatus(self,routetableid):
@@ -74,7 +74,7 @@ class Gateway():
             )
             return res
         except Exception as e:
-            print("something bad happend",e)
+            print(e)
 
     """ function to create transit gateway """
     def createGateway(self):
@@ -105,11 +105,11 @@ class Gateway():
             )
             _tgwid = res['TransitGateway']['TransitGatewayId']
             _tgwname = res['TransitGateway']['Tags'][0]['Value']
-            self.cache.set(_tgwname,_tgwid)
+            cache.set(_tgwname,_tgwid)
             return res
             
         except Exception as e:
-            print("Something bad happend", e)
+            print(e)
 
 
     def createAttachments(self,gatewayid,vpcid,subnetid):
@@ -117,19 +117,36 @@ class Gateway():
             res = self.client.create_transit_gateway_vpc_attachment(
                 TransitGatewayId=gatewayid,
                 VpcId=vpcid,
-                SubnetIds=subnetid,
+                SubnetIds=[s for s in subnetid],
                 TagSpecifications=[
                     {
-                        ResourceType:'transit-gateway-attachment',
-                        Tags: [
-                            'Key': 'Name'
-                            'Value': 
+                        'ResourceType': 'transit-gateway-attachment',
+                        'Tags': [
+                            {
+                                'Key': 'Name',
+                                'Value': args.transitgateway+str(random.randint(1,99))
+
+                            },
                         ]
-                    }
-                ]
+                    },
+
+                ],
+                
             )
+            _attachment = res['TransitGatewayVpcAttachment']['Tag'][0]['Value']
+            _attachmentId = res['TransitGatewayVpcAttachment']['TransitGatewayAttachmentId']
+            cache.set(_attachment,_attachmentId)
+            return res
+            
         except Exception as e:
-            print(f"something bad happend {e}")
+            print(e)
+    
+    def getVpcAttachmentStatus(self, attachmentName):
+        try:
+            res = self.client.describe_transit_gateway_vpc_attachments(
+                TransitGatewayAttachmentIds=[helper.getVpcAttachmentId(attachmentName)],
+            )
+        
 
     def disassociateVpcFromDefault(self):
         pass
@@ -159,10 +176,11 @@ if __name__ == '__main__':
             else:
                 print("Transit Gateway creation in progress")
                 time.sleep(10)
+
     elif args.secdo is not None and args.transitgateway is not None:
         print("creating security domain")
-        r = redis.Redis(db=1)
-        gatewayid = r.get(args.transitgateway).decode('utf-8')
+        #gatewayid = cache.get(args.transitgateway).decode('utf-8')
+        gatewayid = helper.getTransitGatewayId(args.transitgateway)
         if gatewayid:
             rt = c.createSecurityDomain(args.secdo, gatewayid)
             rtid = rt['TransitGatewayRouteTable']['TransitGatewayRouteTableId']
@@ -173,6 +191,13 @@ if __name__ == '__main__':
                 else:
                     print("Creating Security Domain")
                     time.sleep(5)
+
+    elif args.vpcname is not None and args.transitgateway is not None:
+        print(f"Attaching {args.vpcname} to {args.transitgateway}")
+        gatewayid = helper.getTransitGatewayId(args.transitgateway)
+        vpcid = helper.getVpcId(args.vpcname)['Vpcs'][0]['VpcId']
+        subnetid = helper.getSubnetId(vpcid)
+        c.createAttachments(gatewayid,vpcid,subnetid)
     else:
         print(myparser.print_help(sys.stderr))
     
