@@ -11,8 +11,10 @@
 
 <p>How to create transit gateway</p>
 ```python
-python3 gateway.py --transitgateway <transitGatewayName> --region <RegionName>```
+python3 gateway.py --transitgateway <transitGatewayName> --region <RegionName>
+```
 
 <p>How to create a Security Domain</p>
 ```python
-python3 gateway.py --secdo <securityDomainName> --transitgateway <transitGatewayName> --region <RegionName>```
+python3 gateway.py --secdo <securityDomainName> --transitgateway <transitGatewayName> --region <RegionName>
+```
