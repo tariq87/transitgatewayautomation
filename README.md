@@ -5,9 +5,14 @@
 <p>Will create security domains</p>
 <p>Will attach VPC to security domains</p>
 <p>Will let you create segmented routing using security domains</p>
-----------------------------
-```python:
+
+---------------------------------------------------------------------
+
+
 <p>How to create transit gateway</p>
-python3 gateway.py --transitgateway <transitGatewayName> --region <RegionName>
+```python
+python3 gateway.py --transitgateway <transitGatewayName> --region <RegionName>```
+
 <p>How to create a Security Domain</p>
-python3 gateway.py --secdo <securityDomainName> --transitgateway <transitGatewayName> --region <RegionName>
+```python
+python3 gateway.py --secdo <securityDomainName> --transitgateway <transitGatewayName> --region <RegionName>```
