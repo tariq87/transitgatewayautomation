@@ -18,7 +18,10 @@ myparser.add_argument('--transitgateway', metavar='transitgateway', type=str, he
 myparser.add_argument('--vpcname', metavar='vpcname', type=str, help='Name of VPC')
 args = myparser.parse_args()
 
-cache = redis.Redis(host="localhost", db=1)
+try:
+    cache = redis.Redis(host="localhost", db=1)
+except redis.exceptions.ConnectionError as ce:
+    print(ce)
 class Gateway():
     """ Intializing boto and redis connections """
     def __init__(self, region):
@@ -30,8 +33,7 @@ class Gateway():
             #print(f"Created Sessions With AWS in Region {self.region}")
         except Exception as e:
             print(e)
-        except redis.exceptions.ConnectionError as ce:
-            print(ce)
+        
 
     """ function to create security domain """
     def createSecurityDomain(self, name, gatewayid):
