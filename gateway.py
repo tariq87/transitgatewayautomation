@@ -23,7 +23,7 @@ try:
 except redis.exceptions.ConnectionError as ce:
     print(ce)
 class Gateway():
-    """ Intializing boto and redis connections """
+    
     def __init__(self, region):
         try:
             self.session = boto3.Session()
@@ -35,7 +35,7 @@ class Gateway():
             print(e)
         
 
-    """ function to create security domain """
+    
     def create_security_domain(self, name, gatewayid):
         try:  
             res = self.client.create_transit_gateway_route_table(
@@ -59,7 +59,7 @@ class Gateway():
         except Exception as e:
             print(e)
 
-    """ function to get creation status of route table """
+    
     def get_transit_gateway_routetable_status(self,routetableid):
         try:
             res = self.client.describe_transit_gateway_route_tables(
@@ -68,7 +68,7 @@ class Gateway():
         except Exception as e:
             print("Something Bad happened",e)
             
-    """ function to get creation status of transit gateway """
+    
     def get_transit_gateway_status(self, gatewayid):
         try:
             res = self.client.describe_transit_gateways(
@@ -78,7 +78,7 @@ class Gateway():
         except Exception as e:
             print(e)
 
-    """ function to create transit gateway """
+    
     def create_gateway(self):
         try:
             res = self.client.create_transit_gateway(
@@ -164,7 +164,7 @@ class Gateway():
     
 
     
-""" Main Function """
+
 
 if __name__ == '__main__':
     tgw_obj = Gateway(args.region)
