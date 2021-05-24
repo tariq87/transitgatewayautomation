@@ -36,7 +36,7 @@ class Gateway():
         
 
     """ function to create security domain """
-    def createSecurityDomain(self, name, gatewayid):
+    def create_security_domain(self, name, gatewayid):
         try:  
             res = self.client.create_transit_gateway_route_table(
                     TransitGatewayId=gatewayid,
@@ -60,7 +60,7 @@ class Gateway():
             print(e)
 
     """ function to get creation status of route table """
-    def getTransitGatewayRouteTableStatus(self,routetableid):
+    def get_transit_gateway_routetable_status(self,routetableid):
         try:
             res = self.client.describe_transit_gateway_route_tables(
                     TransitGatewayRouteTableIds=[routetableid] )  
@@ -69,7 +69,7 @@ class Gateway():
             print("Something Bad happened",e)
             
     """ function to get creation status of transit gateway """
-    def getTransitGatewayStatus(self, gatewayid):
+    def get_transit_gateway_status(self, gatewayid):
         try:
             res = self.client.describe_transit_gateways(
                     TransitGatewayIds=[gatewayid]
@@ -79,7 +79,7 @@ class Gateway():
             print(e)
 
     """ function to create transit gateway """
-    def createGateway(self):
+    def create_gateway(self):
         try:
             res = self.client.create_transit_gateway(
                 Description = 'Testing transit gateway automation',
@@ -114,7 +114,7 @@ class Gateway():
             print(e)
 
 
-    def createAttachments(self,gatewayid,vpcid,subnetid):
+    def create_attachments(self,gatewayid,vpcid,subnetid):
         try:
             res = self.client.create_transit_gateway_vpc_attachment(
                 TransitGatewayId=gatewayid,
@@ -143,23 +143,23 @@ class Gateway():
         except Exception as e:
             print(e)
     
-    def getVpcAttachmentStatus(self, attachmentName):
+    def get_vpc_attachment_status(self, attachmentName):
         try:
             res = self.client.describe_transit_gateway_vpc_attachments(
-                TransitGatewayAttachmentIds=[helper.getVpcAttachmentId(attachmentName)],
+                TransitGatewayAttachmentIds=[helper.get_vpc_attachment_id(attachmentName)],
             )
             return res
         except Exception as e:
             print(e)
         
 
-    def disassociateVpcFromDefault(self):
+    def disassociate_vpc_from_default(self):
         pass
 
-    def associateVpcToSecDomain(self):
+    def associate_vpc_to_secdomain(self):
         pass
 
-    def createPropagation(self):
+    def create_propagation(self):
         pass
     
 
@@ -167,15 +167,15 @@ class Gateway():
 """ Main Function """
 
 if __name__ == '__main__':
-    c = Gateway(args.region)
+    tgw_obj = Gateway(args.region)
     if args.name is not None:
         print("Creating Trasit Gateway...")
-        re = c.createGateway()
+        re = tgw_obj.create_gateway()
         tgwid = re['TransitGateway']['TransitGatewayId']
         
         while True:
-            if c.getTransitGatewayStatus(tgwid)['TransitGateways'][0]['State'] == 'available':
-                print("TransitGateway Created "+"--- "+c.getTransitGatewayStatus(tgwid)['TransitGateways'][0]['Tags'][0]['Value'])
+            if tgw_obj.get_transit_gateway_status(tgwid)['TransitGateways'][0]['State'] == 'available':
+                print("TransitGateway Created "+"--- "+tgw_obj.get_transit_gateway_status(tgwid)['TransitGateways'][0]['Tags'][0]['Value'])
                 break
 
             else:
@@ -185,13 +185,13 @@ if __name__ == '__main__':
     elif args.secdo is not None and args.transitgateway is not None:
         print("creating security domain")
         #gatewayid = cache.get(args.transitgateway).decode('utf-8')
-        gatewayid = helper.getTransitGatewayId(args.transitgateway)
+        gatewayid = helper.get_transit_gateway_id(args.transitgateway)
         if gatewayid:
-            rt = c.createSecurityDomain(args.secdo, gatewayid)
+            rt = tgw_obj.create_security_domain(args.secdo, gatewayid)
             rtid = rt['TransitGatewayRouteTable']['TransitGatewayRouteTableId']
             while True:
-                if c.getTransitGatewayRouteTableStatus(rtid)['TransitGatewayRouteTables'][0]['State'] == 'available':
-                    print("RouteTable Created"+"---"+c.getTransitGatewayRouteTableStatus(rtid)['TransitGatewayRouteTables'][0]['Tags'][0]['Value'])
+                if tgw_obj.get_transit_gateway_routetable_status(rtid)['TransitGatewayRouteTables'][0]['State'] == 'available':
+                    print("RouteTable Created"+"---"+tgw_obj.get_transit_gateway_routetable_status(rtid)['TransitGatewayRouteTables'][0]['Tags'][0]['Value'])
                     break
                 else:
                     print("Creating Security Domain")
@@ -199,12 +199,12 @@ if __name__ == '__main__':
 
     elif args.vpcname is not None and args.transitgateway is not None:
         print(f"Attaching {args.vpcname} to {args.transitgateway}")
-        gatewayid = helper.getTransitGatewayId(args.transitgateway)
-        vpcid = helper.getVpcId(args.vpcname)['Vpcs'][0]['VpcId']
-        subnetid = helper.getSubnetId(vpcid)
-        re = c.createAttachments(gatewayid,vpcid,subnetid)
+        gatewayid = helper.get_transit_gateway_id(args.transitgateway)
+        vpcid = helper.get_vpc_id(args.vpcname)['Vpcs'][0]['VpcId']
+        subnetid = helper.get_subnet_id(vpcid)
+        re = tgw_obj.create_attachments(gatewayid,vpcid,subnetid)
         while True:
-            if c.getVpcAttachmentStatus(re['TransitGatewayVpcAttachment']['Tag'][0]['Value']) == 'available':
+            if tgw_obj.get_vpc_attachment_status(re['TransitGatewayVpcAttachment']['Tag'][0]['Value']) == 'available':
                 print("Vpc Attachment Created")
                 break
             else:
