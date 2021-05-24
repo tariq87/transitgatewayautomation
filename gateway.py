@@ -148,6 +148,9 @@ class Gateway():
             res = self.client.describe_transit_gateway_vpc_attachments(
                 TransitGatewayAttachmentIds=[helper.getVpcAttachmentId(attachmentName)],
             )
+            return res
+        except Exception as e:
+            print(e)
         
 
     def disassociateVpcFromDefault(self):
@@ -199,7 +202,14 @@ if __name__ == '__main__':
         gatewayid = helper.getTransitGatewayId(args.transitgateway)
         vpcid = helper.getVpcId(args.vpcname)['Vpcs'][0]['VpcId']
         subnetid = helper.getSubnetId(vpcid)
-        c.createAttachments(gatewayid,vpcid,subnetid)
+        re = c.createAttachments(gatewayid,vpcid,subnetid)
+        while True:
+            if c.getVpcAttachmentStatus(re['TransitGatewayVpcAttachment']['Tag'][0]['Value']) == 'available':
+                print("Vpc Attachment Created")
+                break
+            else:
+                print("Creating VPC Attachment")
+                time.sleep(10)
     else:
         print(myparser.print_help(sys.stderr))
     
