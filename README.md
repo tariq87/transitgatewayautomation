@@ -11,7 +11,7 @@
 
 <p>How to create transit gateway</p>
 
-```python3 gateway.py --transitgateway <transitGatewayName> --region <RegionName>```
+```python3 gateway.py --name <transitGatewayName> --region <RegionName>```
 
 <br></br>
 <p>How to create a Security Domain</p>
