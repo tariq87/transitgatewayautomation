@@ -33,7 +33,7 @@ if __name__ == '__main__':
     elif (args.vpcname is not None) and (args.secdo is not None) and (args.transitgateway is not None):
         print(f"Adding VPC {args.vpcname} to {args.secdo} security domain")
         tgrtid = helper.get_transit_gateway_route_table_id(args.secdo)
-        tgatid = helper.get_vpc_attachment_id(args.transitgateway)
+        tgatid = helper.get_vpc_attachment_id(helper.get_vpc_id(args.vpcname)['Vpcs'][0]['VpcId'])
         tgw_obj.associate_vpc_to_secdomain(tgrtid,tgatid)
         while True:
             if tgw_obj.routetable_association_status(tgrtid,tgatid)['Associations'][0]['State'] == 'associated':

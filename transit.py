@@ -113,7 +113,7 @@ class Gateway():
                         'Tags': [
                             {
                                 'Key': 'Name',
-                                'Value': name
+                                'Value': vpcid
 
                             },
                         ]
@@ -150,6 +150,8 @@ class Gateway():
             return res 
         except Exception as e:
             print(e)
+
+
     def routetable_association_status(self,tgrtid,tgatid):
         try:
             res = self.client.get_transit_gateway_route_table_associations(
