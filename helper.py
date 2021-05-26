@@ -35,5 +35,10 @@ def get_vpc_attachment_id(vpcattachmentname):
     else:
         raise Exception("Attachment Not Found!")
 
-
+def get_transit_gateway_route_table_id(rtname):
+    if r.exists(rtname):
+        rtid = r.get(rtname).decode('utf-8')
+        return rtid
+    else:
+        raise Exception("Route Table Not Found!")
 

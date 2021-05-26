@@ -73,8 +73,8 @@ class Gateway():
                 Options = {
                     'AmazonSideAsn': random.randint(64512,65534),
                     'AutoAcceptSharedAttachments': 'enable',
-                    'DefaultRouteTableAssociation': 'enable',
-                    'DefaultRouteTablePropagation': 'enable',
+                    'DefaultRouteTableAssociation': 'disable',
+                    'DefaultRouteTablePropagation': 'disable',
                     'VpnEcmpSupport': 'enable',
                     'DnsSupport': 'enable',
                     'MulticastSupport': 'enable',
@@ -113,7 +113,7 @@ class Gateway():
                         'Tags': [
                             {
                                 'Key': 'Name',
-                                'Value': name+str(random.randint(1,99))
+                                'Value': name
 
                             },
                         ]
@@ -139,12 +139,31 @@ class Gateway():
         except Exception as e:
             print(e)
         
+        
 
-    def disassociate_vpc_from_default(self):
-        pass
-
-    def associate_vpc_to_secdomain(self):
-        pass
+    def associate_vpc_to_secdomain(self,tgrtid,tgatid):
+        try:
+            res = self.client.associate_transit_gateway_route_table(
+                TransitGatewayRouteTableId=tgrtid,
+                TransitGatewayAttachmentId=tgatid
+            )
+            return res 
+        except Exception as e:
+            print(e)
+    def routetable_association_status(self,tgrtid,tgatid):
+        try:
+            res = self.client.get_transit_gateway_route_table_associations(
+                TransitGatewayRouteTableId=tgrtid,
+                Filters=[
+                    {
+                        'Name': 'transit-gateway-attachment-id',
+                        'Values': [tgatid]
+                    },
+                ]
+            )
+            return res
+        except Exception as e:
+            print(e)
 
     def create_propagation(self):
         pass

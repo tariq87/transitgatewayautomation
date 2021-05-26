@@ -9,7 +9,7 @@ prog='gateway.py', usage='%(prog)s [options]')
 myparser.add_argument('--name', metavar='name', type=str, help="Name of the transit gateway")
 myparser.add_argument('--region', metavar='region', type=str, help="Name of the region", required=True)
 myparser.add_argument('--secdo', metavar='secdo', type=str, help='Name of security domain')
-myparser.add_argument('--transitgateway', metavar='transitgateway', type=str, help="Name of transit gateway to add the security domain")
+myparser.add_argument('--transitgateway',dest="transitgateway", metavar='transitgateway', type=str, help="Name of transit gateway to add the security domain")
 myparser.add_argument('--vpcname', metavar='vpcname', type=str, help='Name of VPC')
 args = myparser.parse_args()
 
@@ -30,9 +30,22 @@ if __name__ == '__main__':
             else:
                 print("Transit Gateway creation in progress")
                 time.sleep(10)
+    elif (args.vpcname is not None) and (args.secdo is not None) and (args.transitgateway is not None):
+        print(f"Adding VPC {args.vpcname} to {args.secdo} security domain")
+        tgrtid = helper.get_transit_gateway_route_table_id(args.secdo)
+        tgatid = helper.get_vpc_attachment_id(args.transitgateway)
+        tgw_obj.associate_vpc_to_secdomain(tgrtid,tgatid)
+        while True:
+            if tgw_obj.routetable_association_status(tgrtid,tgatid)['Associations'][0]['State'] == 'associated':
+                print("Association Complete")
+                break
+            else:
+                print("Vpc Association in Progress...")
+                time.sleep(5)
 
-    elif args.secdo is not None and args.transitgateway is not None:
-        print("creating security domain")
+
+    elif (args.secdo is not None) and (args.transitgateway is not None):
+        print("Creating security domain...")
         #gatewayid = cache.get(args.transitgateway).decode('utf-8')
         gatewayid = helper.get_transit_gateway_id(args.transitgateway)
         if gatewayid:
@@ -40,13 +53,13 @@ if __name__ == '__main__':
             rtid = rt['TransitGatewayRouteTable']['TransitGatewayRouteTableId']
             while True:
                 if tgw_obj.get_transit_gateway_routetable_status(rtid)['TransitGatewayRouteTables'][0]['State'] == 'available':
-                    print("RouteTable Created"+"---"+tgw_obj.get_transit_gateway_routetable_status(rtid)['TransitGatewayRouteTables'][0]['Tags'][0]['Value'])
+                    print("Security Domain Created"+"---"+tgw_obj.get_transit_gateway_routetable_status(rtid)['TransitGatewayRouteTables'][0]['Tags'][0]['Value'])
                     break
                 else:
-                    print("Creating Security Domain")
+                    print("Security Domain Creation in progress...")
                     time.sleep(5)
 
-    elif args.vpcname is not None and args.transitgateway is not None:
+    elif (args.vpcname is not None) and (args.transitgateway is not None):
         print(f"Attaching {args.vpcname} to {args.transitgateway}")
         gatewayid = helper.get_transit_gateway_id(args.transitgateway)
         vpcid = helper.get_vpc_id(args.vpcname)['Vpcs'][0]['VpcId']
@@ -59,6 +72,7 @@ if __name__ == '__main__':
             else:
                 print("Creating VPC Attachment")
                 time.sleep(10)
+        
     else:
         print(myparser.print_help(sys.stderr))
     
