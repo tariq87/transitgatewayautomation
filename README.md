@@ -16,5 +16,11 @@
 <br></br>
 <p>How to create a Security Domain</p>
 
-```python3 gateway.py --secdo <securityDomainName> --transitgateway <transitGatewayName> --region <RegionName>```
+```python3 gateway.py --secdo <security_Domain_Name> --transitgateway <transit_Gateway_Name> --region <Region_Name>```
+<br></br>
+<p>How to attach VPC to transit gateway</p>
+```python3 gateway.py --vpcname <vpc_name> --transitgateway <transit_Gateway_Name> --region <Region_Name>```
+<br></br>
+<p>How to attach VPC to a security domain</p>
+```python3 gateway.py --vpcname <vpc_name> --secdo <security_domain_name> --transitgateway <transit_Gateway_Name> --region <Region_Name>```
 
