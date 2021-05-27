@@ -42,6 +42,12 @@ if __name__ == '__main__':
             else:
                 print("Vpc Association in Progress...")
                 time.sleep(5)
+        print("Updating VPC routetables")
+        ids = helper.get_vpc_routetable_ids(helper.get_vpc_id(args.vpcname)['Vpcs'][0]['VpcId'])
+        tgwid = helper.get_transit_gateway_id(args.transitgateway)
+        for rtid in ids:
+            tgw_obj.update_vpc_route_table(rtid,tgwid)
+            print(f"updated routetable {rtid}")
 
 
     elif (args.secdo is not None) and (args.transitgateway is not None):

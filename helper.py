@@ -42,3 +42,15 @@ def get_transit_gateway_route_table_id(rtname):
     else:
         raise Exception("Route Table Not")
 
+def get_vpc_routetable_ids(vpcid):
+    try:
+        _filter = [{'Name':'vpc-id', 'Values':[vpcid]}]
+        list_vpc_ids = []
+        res = client.describe_route_tables(Filters=_filter)
+        for i in range(len(res['RouteTables'])):
+            list_vpc_ids.append(res['RouteTables'][i]['RouteTableId'])
+        return list_vpc_ids
+    except Exception as e:
+        print(e)
+    
+

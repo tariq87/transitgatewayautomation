@@ -166,6 +166,17 @@ class Gateway():
             return res
         except Exception as e:
             print(e)
+    
+    def update_vpc_route_table(self,routetableid,tgwid):
+        try:
+            res = self.client.create_route(
+                DestinationCidrBlock='10.0.0.0/8',
+                TransitGatewayId=tgwid,
+                RouteTableId=routetableid,
+            )
+            return res
+        except Exception as e:
+            print(e)
 
     def create_propagation(self):
         pass
