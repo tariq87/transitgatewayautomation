@@ -1,7 +1,8 @@
 import boto3
 import redis
+import db
 client = boto3.client('ec2')
-r = redis.Redis(db=1)
+r = db.redis_connection()
 
 def get_vpc_id(vpcname):
     _filter = [{'Name':'tag:Name', 'Values':[vpcname]}]
@@ -40,17 +41,23 @@ def get_transit_gateway_route_table_id(rtname):
         rtid = r.get(rtname).decode('utf-8')
         return rtid
     else:
-        raise Exception("Route Table Not")
+        raise Exception("Route Table Not Found!")
 
 def get_vpc_routetable_ids(vpcid):
     try:
         _filter = [{'Name':'vpc-id', 'Values':[vpcid]}]
-        list_vpc_ids = []
         res = client.describe_route_tables(Filters=_filter)
-        for i in range(len(res['RouteTables'])):
-            list_vpc_ids.append(res['RouteTables'][i]['RouteTableId'])
+        list_vpc_ids = [res['RouteTables'][i]['RouteTableId'] for i in range(len(res['RouteTables']))]
+        #for i in range(len(res['RouteTables'])):
+         #   list_vpc_ids.append(res['RouteTables'][i]['RouteTableId'])
         return list_vpc_ids
     except Exception as e:
         print(e)
+
+def get_attachment_id_from_tgw_route_table(tgrtid):
+    length = r.llen(tgrtid)
+    return [atid.decode('utf-8') for atid in r.lrange(tgrtid,0,length)]
+
+
     
 

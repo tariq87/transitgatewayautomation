@@ -1,14 +1,11 @@
 import boto3
-import redis
+import db
 import random
+import time
+import botocore.exceptions
 import helper
-from redis import ConnectionError
 
-try:
-    cache = redis.Redis(host="localhost", db=1)
-except redis.exceptions.ConnectionError as ce:
-    print(ce)
-    
+cache = db.redis_connection()
 class Gateway():
     
     def __init__(self, region):
@@ -138,8 +135,14 @@ class Gateway():
             return res
         except Exception as e:
             print(e)
-        
-        
+
+
+    def get_all_transit_gateway_attachments(self,tgwid):
+        try:
+            res = self.client.describe_transit_gateway_vpc_attachments(Filters=[{'Name':'transit-gateway-id','Values':[tgwid]}])   
+            return res
+        except botocore.exceptions.ClientError as error:
+            raise error
 
     def associate_vpc_to_secdomain(self,tgrtid,tgatid):
         try:
@@ -147,7 +150,9 @@ class Gateway():
                 TransitGatewayRouteTableId=tgrtid,
                 TransitGatewayAttachmentId=tgatid
             )
+            cache.lpush(tgrtid,tgatid)
             return res 
+            
         except Exception as e:
             print(e)
 
@@ -172,12 +177,47 @@ class Gateway():
             res = self.client.create_route(
                 DestinationCidrBlock='10.0.0.0/8',
                 TransitGatewayId=tgwid,
-                RouteTableId=routetableid,
+                RouteTableId=routetableid
             )
             return res
         except Exception as e:
             print(e)
 
-    def create_propagation(self):
-        pass
-    
+    def enable_propagation(self,tgrtid,tgatid):
+        try:
+            res = self.client.enable_transit_gateway_route_table_propagation(
+                TransitGatewayRouteTableId=tgrtid,
+                TransitGatewayAttachmentId=tgatid
+            )
+            return res
+        except Exception as e:
+            print(e)
+
+    def delete_transitgateway(self, transitgatewayname):
+        res = self.get_all_transit_gateway_attachments(helper.get_transit_gateway_id(transitgatewayname))
+        if len(res['TransitGatewayVpcAttachments']):
+            for i in range(len(res['TransitGatewayVpcAttachments'])):
+                self.delete_attachment(res['TransitGatewayVpcAttachments'][i]['TransitGatewayAttachmentId'])
+                while True:
+                    if not self.get_vpc_attachment_status(res['TransitGatewayVpcAttachments'][i]['TransitGatewayAttachmentId'])['TransitGatewayVpcAttachments'][0]['State'] == 'deleted':
+                        print("Deleting VPC Attachments")
+                        time.sleep(15)
+                    else:
+                        break
+                      
+        self.client.delete_transit_gateway(TransitGatewayId=helper.get_transit_gateway_id(transitgatewayname))
+        while True:
+            if not self.get_transit_gateway_status(helper.get_transit_gateway_id(transitgatewayname))['TransitGateways'][0]['State'] == 'deleted':
+               print(f"Deleting transit gateway {transitgatewayname}")
+               time.sleep(15)
+            else:
+                print("Transit Gateway Deleted")
+                break
+
+
+    def delete_attachment(self, atid):
+        try:
+            res = self.client.delete_transit_gateway_vpc_attachment(TransitGatewayAttachmentId=atid)
+            return res
+        except botocore.exceptions.ClientError as error:
+            raise error
