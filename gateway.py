@@ -1,7 +1,7 @@
 from transit import Gateway
 import helper
-import time
-import sys 
+import time,sys
+import db 
 import botocore.exceptions
 import argparse
 
@@ -40,6 +40,11 @@ if __name__ == '__main__':
         tgrtid = helper.get_transit_gateway_route_table_id(args.secdo)
         tgatid = helper.get_vpc_attachment_id(helper.get_vpc_id(args.vpcname)['Vpcs'][0]['VpcId'])
         tgw_obj.enable_propagation(tgrtid,tgatid)
+        _cache = db.redis_connection()
+        if _cache.exists("l_"+args.secdo) and _cache.llen("l_"+args.secdo):
+            for _id in _cache.lrange("l_"+args.secdo,0,_cache.llen("l_"+args.secdo)):
+                _destrtid = helper.get_transit_gateway_route_table_id(_id)
+                tgw_obj.enable_propagation(_destrtid,tgatid)
         tgw_obj.associate_vpc_to_secdomain(tgrtid,tgatid)
         while True:
             if tgw_obj.routetable_association_status(tgrtid,tgatid)['Associations'][0]['State'] == 'associated':
@@ -73,7 +78,7 @@ if __name__ == '__main__':
                     break
                 else:
                     print("Security Domain Creation in progress...")
-                    time.sleep(5)
+                    time.sleep(15)
 
     elif (args.vpcname is not None) and (args.transitgateway is not None):
         print(f"Attaching {args.vpcname} to {args.transitgateway}")
@@ -94,6 +99,9 @@ if __name__ == '__main__':
 
 
     elif (args.connect[0] is not None) and (args.connect[1] is not None):
+       _cache = db.redis_connection()
+       _cache.lpush("l_"+args.connect[0],args.connect[1])
+       _cache.lpush("l_"+args.connect[1],args.connect[0])
        srcrtid = helper.get_transit_gateway_route_table_id(args.connect[0])
        destrtid = helper.get_transit_gateway_route_table_id(args.connect[1])
        srcatid = helper.get_attachment_id_from_tgw_route_table(srcrtid)
