@@ -21,12 +21,21 @@
 
 ```python3 gateway.py --secdo <security_Domain_Name> --transitgateway <transit_Gateway_Name> --region <Region_Name>```
 <br></br>
+
 <p>How to attach VPC to transit gateway</p>
+
 ```python3 gateway.py --vpcname <vpc_name> --transitgateway <transit_Gateway_Name> --region <Region_Name>```
 <br></br>
 <p>How to attach VPC to a security domain</p>
+
 ```python3 gateway.py --vpcname <vpc_name> --secdo <security_domain_name> --transitgateway <transit_Gateway_Name> --region <Region_Name>```
 <br></br>
+
 <p>How to connect two securit domains</p>
+
 ```python3 gateway.py --connect <SecurityDomain1> <SecurityDomain2> --region <Region_Name>```
+<br></br>
+<p>How to delete transit gateway</p>
+
+```python3 gateway.py --delete <transit_Gateway_Name> --region <Region_Name>```
 
