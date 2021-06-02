@@ -14,6 +14,7 @@ myparser.add_argument('--region', metavar='region', type=str, help="Name of the 
 myparser.add_argument('--secdo', metavar='secdo', type=str, help='Name of security domain')
 myparser.add_argument('--transitgateway',dest="transitgateway", metavar='transitgateway', type=str, help="Name of transit gateway to add the security domain")
 myparser.add_argument('--connect', dest='connect', metavar='connect', nargs="+", help="Connect two security domains")
+myparser.add_argument('--connect', dest='disconnect', metavar='disconnect', nargs=2, help="Disconnect two security domains")
 myparser.add_argument('--peer',dest='peer',nargs=2,help="Peering transit gateways")
 myparser.add_argument('--account-id',dest='accountid',type=str,help="Account ID of peering transit gateway")
 myparser.add_argument('--peer-region',dest='peerregion',type=str,help="Region name for peering transit gateway")
@@ -40,7 +41,7 @@ if __name__ == '__main__':
                 print("Transit Gateway creation in progress")
                 time.sleep(10)
         """Adding vpc to security domain"""            
-    elif (args.vpcname is not None) and (args.secdo is not None) and (args.transitgateway is not None):
+    elif args.vpcname and args.secdo and args.transitgateway:
         print(f"Adding VPC {args.vpcname} to {args.secdo} security domain")
         tgrtid = helper.get_transit_gateway_route_table_id(args.secdo)
         tgatid = helper.get_vpc_attachment_id(helper.get_vpc_id(args.vpcname)['Vpcs'][0]['VpcId'])
@@ -70,7 +71,7 @@ if __name__ == '__main__':
                 
 
         """In this section we are creating a security domain aka custom route table"""
-    elif (args.secdo is not None) and (args.transitgateway is not None):
+    elif args.secdo and args.transitgateway:
         print("Creating security domain...")
         #gatewayid = cache.get(args.transitgateway).decode('utf-8')
         gatewayid = helper.get_transit_gateway_id(args.transitgateway)
@@ -85,7 +86,7 @@ if __name__ == '__main__':
                     print("Security Domain Creation in progress...")
                     time.sleep(15)
         """Here we are attaching a vpc to a transit gateway, without this, we cannot put a vpc inside any security domain"""
-    elif (args.vpcname is not None) and (args.transitgateway is not None):
+    elif args.vpcname and args.transitgateway:
         print(f"Attaching {args.vpcname} to {args.transitgateway}")
         gatewayid = helper.get_transit_gateway_id(args.transitgateway)
         vpcid = helper.get_vpc_id(args.vpcname)['Vpcs'][0]['VpcId']
@@ -99,27 +100,28 @@ if __name__ == '__main__':
                 print("Creating VPC Attachment")
                 time.sleep(10)
         """This is for deleting a transit gateway and all its vpc attachments"""
-    elif args.delete is not None:
+    elif args.delete:
         tgw_obj.delete_transitgateway(args.delete)
 
         """Here we are creating a cross region transit gateway peering attachment, this is different from normal vpc attachment"""
-    elif args.peer[0] is not None and args.peer[1] is not None and args.peerregion is not None:
-        if args.accountid is not None:
-            re = tgw_obj.peer_gateways(args.peer[0],args.peer[1],accountid=args.accountid,peer_region=args.peerregion)
+    elif args.peer:
+        if args.accountid:
+            re = tgw_obj.peer_gateways(args.peer[0],args.peer[1],args.peerregion,accountid=args.accountid,)
         else:
-            re = tgw_obj.peer_gateways(args.peer[0],args.peer[1],peer_region=args.peerregion)
+            re = tgw_obj.peer_gateways(args.peer[0],args.peer[1],args.peerregion)
         while True:
             if tgw_obj.get_peering_connection_status(re['TransitGatewayPeeringAttachment']['TransitGatewayAttachmentId'])['TransitGatewayPeeringAttachments'][0]['State'] == 'pendingAcceptance':
                 tgw_obj2 = Gateway(args.peerregion)
                 tgw_obj2.accept_peering_connection(re['TransitGatewayPeeringAttachment']['TransitGatewayAttachmentId'])
-                print("Peering Connection Created")
-                break
+                if tgw_obj2.get_peering_connection_status(re['TransitGatewayPeeringAttachment']['TransitGatewayAttachmentId'])['TransitGatewayPeeringAttachments'][0]['State'] == 'available':
+                    print("Peering Connection Created")
+                    break
             else:
                 print("Creating Peering Connection...")
                 time.sleep(10)
 
         """Section to connect 2 security domains"""
-    elif args.connect[0] is not None and args.connect[1] is not None:
+    elif args.connect:
        _cache = db.redis_connection()
        _cache.lpush("l_"+args.connect[0],args.connect[1])
        _cache.lpush("l_"+args.connect[1],args.connect[0])
@@ -132,11 +134,16 @@ if __name__ == '__main__':
        for srcid in srcatid: tgw_obj.enable_propagation(destrtid,srcid)
        print(f"Propagation Complete")
     
-    
+    elif args.disconnect:
+       srcrtid = helper.get_transit_gateway_route_table_id(args.disconnect[0])
+       destrtid = helper.get_transit_gateway_route_table_id(args.disconnect[1])
+       srcatid = helper.get_attachment_id_from_tgw_route_table(srcrtid)
+       destatid = helper.get_attachment_id_from_tgw_route_table(destrtid)
+       print(f"Disconnecting {args.disconnect[0]} to {args.disconnect[1]}")
+       for destid in destatid: tgw_obj.disable_propagation(srcrtid,destid)    
+       for srcid in srcatid: tgw_obj.disable_propagation(destrtid,srcid)
+       print(f"Disconnection Complete")
 
-
-       
-        
     else:
         print(myparser.print_help(sys.stderr))
     

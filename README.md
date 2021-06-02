@@ -34,10 +34,16 @@
 ```python3 gateway.py --vpcname <vpc_name> --secdo <security_domain_name> --transitgateway <transit_Gateway_Name> --region <Region_Name>```
 <br></br>
 
-<p>How to connect two securit domains</p>
+<p>How to Connect two security domains</p>
 
 ```python3 gateway.py --connect <SecurityDomain1> <SecurityDomain2> --region <Region_Name>```
 <br></br>
+
+<p>How to Disconnect two security domains</p>
+
+```python3 gateway.py --disconnect <SecurityDomain1> <SecurityDomain2> --region <Region_Name>```
+<br></br>
+
 <p>How to delete transit gateway</p>
 
 ```python3 gateway.py --delete <transit_Gateway_Name> --region <Region_Name>```

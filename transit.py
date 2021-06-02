@@ -192,6 +192,16 @@ class Gateway(object):
             return res
         except Exception as e:
             print(e)
+    
+    def disable_propagation(self,tgrtid,tgatid):
+        try:
+            res = self.client.disable_transit_gateway_route_table_propagation(
+                TransitGatewayRouteTableId=tgrtid,
+                TransitGatewayAttachmentId=tgatid
+            )
+            return res
+        except Exception as e:
+            print(e)
 
     def delete_transitgateway(self, transitgatewayname):
         res = self.get_all_transit_gateway_attachments(helper.get_transit_gateway_id(transitgatewayname))
@@ -221,25 +231,28 @@ class Gateway(object):
             return res
         except botocore.exceptions.ClientError as error:
             raise error
-    def peer_gateways(self, gatewayname1, gatewayname2, accountid=helper.get_account_id(),peer_region=boto3.session.Session().region_name):
-        res = self.client.create_transit_gateway_peering_attachment(
-            TransitGatewayId=helper.get_transit_gateway_id(gatewayname1),
-            PeerTransitGatewayId=helper.get_transit_gateway_id(gatewayname2),
-            PeerAccountId=accountid,
-            PeerRegion=peer_region,
-            TagSpecifications=[
-                {
-                    'ResourceType': 'transit-gateway-attachment',
-                    'Tags': [
-                        {
-                            'Key': 'Name',
-                            'Value': gatewayname1+"-"+gatewayname2
-                        },
-                    ]
-                },
-            ],
-        )
-        return res
+    def peer_gateways(self, gatewayname1, gatewayname2,peer_region,accountid=helper.get_account_id()):
+        try:
+            res = self.client.create_transit_gateway_peering_attachment(
+                TransitGatewayId=helper.get_transit_gateway_id(gatewayname1),
+                PeerTransitGatewayId=helper.get_transit_gateway_id(gatewayname2),
+                PeerAccountId=accountid,
+                PeerRegion=peer_region,
+                TagSpecifications=[
+                    {
+                        'ResourceType': 'transit-gateway-attachment',
+                        'Tags': [
+                            {
+                                'Key': 'Name',
+                                'Value': gatewayname1+"-"+gatewayname2
+                            },
+                        ]
+                    },
+                ],
+            )
+            return res
+        except botocore.exceptions.ClientError as ce:
+            raise ce
 
     def get_peering_connection_status(self,tgatid):
         res = self.client.describe_transit_gateway_peering_attachments(TransitGatewayAttachmentIds=[tgatid])
