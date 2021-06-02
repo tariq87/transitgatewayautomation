@@ -14,6 +14,9 @@ myparser.add_argument('--region', metavar='region', type=str, help="Name of the 
 myparser.add_argument('--secdo', metavar='secdo', type=str, help='Name of security domain')
 myparser.add_argument('--transitgateway',dest="transitgateway", metavar='transitgateway', type=str, help="Name of transit gateway to add the security domain")
 myparser.add_argument('--connect', dest='connect', metavar='connect', nargs="+", help="Connect two security domains")
+myparser.add_argument('--peer',dest='peer',nargs=2,help="Peering transit gateways")
+myparser.add_argument('--account-id',dest='accountid',type=str,help="Account ID of peering transit gateway")
+myparser.add_argument('--peer-region',dest='peerregion',type=str,help="Region name for peering transit gateway")
 myparser.add_argument('--vpcname', metavar='vpcname', type=str, help='Name of VPC')
 myparser.add_argument('--delete', metavar='delete', type=str, dest='delete', help="Delete transit Gateway")
 args = myparser.parse_args()
@@ -22,6 +25,7 @@ args = myparser.parse_args()
 
 if __name__ == '__main__':
     tgw_obj = Gateway(args.region)
+    """Create transit gateway by passing the name of the transit gateway"""
     if args.name is not None:
         print("Creating Trasit Gateway...")
         re = tgw_obj.create_gateway(args.name)
@@ -35,6 +39,7 @@ if __name__ == '__main__':
             else:
                 print("Transit Gateway creation in progress")
                 time.sleep(10)
+        """Adding vpc to security domain"""            
     elif (args.vpcname is not None) and (args.secdo is not None) and (args.transitgateway is not None):
         print(f"Adding VPC {args.vpcname} to {args.secdo} security domain")
         tgrtid = helper.get_transit_gateway_route_table_id(args.secdo)
@@ -64,7 +69,7 @@ if __name__ == '__main__':
             raise error
                 
 
-
+        """In this section we are creating a security domain aka custom route table"""
     elif (args.secdo is not None) and (args.transitgateway is not None):
         print("Creating security domain...")
         #gatewayid = cache.get(args.transitgateway).decode('utf-8')
@@ -79,7 +84,7 @@ if __name__ == '__main__':
                 else:
                     print("Security Domain Creation in progress...")
                     time.sleep(15)
-
+        """Here we are attaching a vpc to a transit gateway, without this, we cannot put a vpc inside any security domain"""
     elif (args.vpcname is not None) and (args.transitgateway is not None):
         print(f"Attaching {args.vpcname} to {args.transitgateway}")
         gatewayid = helper.get_transit_gateway_id(args.transitgateway)
@@ -93,12 +98,28 @@ if __name__ == '__main__':
             else:
                 print("Creating VPC Attachment")
                 time.sleep(10)
-    
+        """This is for deleting a transit gateway and all its vpc attachments"""
     elif args.delete is not None:
         tgw_obj.delete_transitgateway(args.delete)
 
+        """Here we are creating a cross region transit gateway peering attachment, this is different from normal vpc attachment"""
+    elif args.peer[0] is not None and args.peer[1] is not None and args.peerregion is not None:
+        if args.accountid is not None:
+            re = tgw_obj.peer_gateways(args.peer[0],args.peer[1],accountid=args.accountid,peer_region=args.peerregion)
+        else:
+            re = tgw_obj.peer_gateways(args.peer[0],args.peer[1],peer_region=args.peerregion)
+        while True:
+            if tgw_obj.get_peering_connection_status(re['TransitGatewayPeeringAttachment']['TransitGatewayAttachmentId'])['TransitGatewayPeeringAttachments'][0]['State'] == 'pendingAcceptance':
+                tgw_obj2 = Gateway(args.peerregion)
+                tgw_obj2.accept_peering_connection(re['TransitGatewayPeeringAttachment']['TransitGatewayAttachmentId'])
+                print("Peering Connection Created")
+                break
+            else:
+                print("Creating Peering Connection...")
+                time.sleep(10)
 
-    elif (args.connect[0] is not None) and (args.connect[1] is not None):
+        """Section to connect 2 security domains"""
+    elif args.connect[0] is not None and args.connect[1] is not None:
        _cache = db.redis_connection()
        _cache.lpush("l_"+args.connect[0],args.connect[1])
        _cache.lpush("l_"+args.connect[1],args.connect[0])
@@ -110,6 +131,9 @@ if __name__ == '__main__':
        for destid in destatid: tgw_obj.enable_propagation(srcrtid,destid)    
        for srcid in srcatid: tgw_obj.enable_propagation(destrtid,srcid)
        print(f"Propagation Complete")
+    
+    
+
 
        
         

@@ -58,6 +58,9 @@ def get_attachment_id_from_tgw_route_table(tgrtid):
     length = r.llen(tgrtid)
     return [atid.decode('utf-8') for atid in r.lrange(tgrtid,0,length)]
 
+def get_account_id():
+    return boto3.client("sts").get_caller_identity()["Account"]
+
 
     
 

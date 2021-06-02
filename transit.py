@@ -6,7 +6,7 @@ import botocore.exceptions
 import helper
 
 cache = db.redis_connection()
-class Gateway():
+class Gateway(object):
     
     def __init__(self, region):
         try:
@@ -221,3 +221,32 @@ class Gateway():
             return res
         except botocore.exceptions.ClientError as error:
             raise error
+    def peer_gateways(self, gatewayname1, gatewayname2, accountid=helper.get_account_id(),peer_region=boto3.session.Session().region_name):
+        res = self.client.create_transit_gateway_peering_attachment(
+            TransitGatewayId=helper.get_transit_gateway_id(gatewayname1),
+            PeerTransitGatewayId=helper.get_transit_gateway_id(gatewayname2),
+            PeerAccountId=accountid,
+            PeerRegion=peer_region,
+            TagSpecifications=[
+                {
+                    'ResourceType': 'transit-gateway-attachment',
+                    'Tags': [
+                        {
+                            'Key': 'Name',
+                            'Value': gatewayname1+"-"+gatewayname2
+                        },
+                    ]
+                },
+            ],
+        )
+        return res
+
+    def get_peering_connection_status(self,tgatid):
+        res = self.client.describe_transit_gateway_peering_attachments(TransitGatewayAttachmentIds=[tgatid])
+        return res 
+
+    def accept_peering_connection(self,tgatid):
+        res = self.client.accept_transit_gateway_peering_attachment(TransitGatewayAttachmentId=tgatid)
+        return res
+
+    

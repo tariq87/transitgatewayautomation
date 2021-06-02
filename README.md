@@ -1,5 +1,8 @@
 # transit gateway automation
 ----------------------------
+
+<p>This tool require to authenticate boto3 with your aws using either aws cli credentials or environment variables</p>
+<p>You need to pip install boto3, redis as well</p>
 <p>This tool will create a transit gateway with default settings</p>
 <p>Will also create transit gateway with custom settings</p>
 <p>Will create security domains</p>
