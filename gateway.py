@@ -14,7 +14,7 @@ myparser.add_argument('--region', metavar='region', type=str, help="Name of the 
 myparser.add_argument('--secdo', metavar='secdo', type=str, help='Name of security domain')
 myparser.add_argument('--transitgateway',dest="transitgateway", metavar='transitgateway', type=str, help="Name of transit gateway to add the security domain")
 myparser.add_argument('--connect', dest='connect', metavar='connect', nargs="+", help="Connect two security domains")
-myparser.add_argument('--connect', dest='disconnect', metavar='disconnect', nargs=2, help="Disconnect two security domains")
+myparser.add_argument('--disconnect', dest='disconnect', metavar='disconnect', nargs=2, help="Disconnect two security domains")
 myparser.add_argument('--peer',dest='peer',nargs=2,help="Peering transit gateways")
 myparser.add_argument('--account-id',dest='accountid',type=str,help="Account ID of peering transit gateway")
 myparser.add_argument('--peer-region',dest='peerregion',type=str,help="Region name for peering transit gateway")
