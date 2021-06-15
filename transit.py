@@ -38,7 +38,8 @@ class Gateway(object):
             )
             _tgrtid = res['TransitGatewayRouteTable']['TransitGatewayRouteTableId']
             _tgrtname = res['TransitGatewayRouteTable']['Tags'][0]['Value']
-            cache.set(_tgrtname,_tgrtid)
+            #cache.set(_tgrtname,_tgrtid)
+            cache.hset(self.region,_tgrtname,_tgrtid)
             return res
         except Exception as e:
             print(e)
@@ -83,7 +84,7 @@ class Gateway(object):
                     'Tags': [
                         {
                             'Key': 'Name',
-                            'Value': name +"-"+ str(random.randint(5555,9999))
+                            'Value': name + str(random.randint(5555,9999))
                         },
                         ]
                     },
@@ -121,6 +122,7 @@ class Gateway(object):
             )
             _attachment = res['TransitGatewayVpcAttachment']['Tags'][0]['Value']
             _attachmentId = res['TransitGatewayVpcAttachment']['TransitGatewayAttachmentId']
+            cache.set(_attachmentId,_attachment)
             cache.set(_attachment,_attachmentId)
             return res
             
@@ -231,6 +233,19 @@ class Gateway(object):
             return res
         except botocore.exceptions.ClientError as error:
             raise error
+    
+
+    def create_transit_gateway_static_route(self,cidr,tgrtid,tgatid):
+        try:
+            res = self.client.create_transit_gateway_route(
+                DestinationCidrBlock=cidr,
+                TransitGatewayRouteTableId=tgrtid,
+                TransitGatewayAttachmentId=tgatid
+            )
+            return res
+        except botocore.exceptions.ClientError as error:
+            raise error
+
     def peer_gateways(self, gatewayname1, gatewayname2,peer_region,accountid=helper.get_account_id()):
         try:
             res = self.client.create_transit_gateway_peering_attachment(
@@ -250,16 +265,25 @@ class Gateway(object):
                     },
                 ],
             )
+            peer_at_id = res['TransitGatewayPeeringAttachment']['TransitGatewayAttachmentId']
+            name = res['TransitGatewayPeeringAttachment']['Tags'][0]['Value']
+            cache.set(name,peer_at_id)
             return res
         except botocore.exceptions.ClientError as ce:
             raise ce
 
     def get_peering_connection_status(self,tgatid):
-        res = self.client.describe_transit_gateway_peering_attachments(TransitGatewayAttachmentIds=[tgatid])
-        return res 
+        try:
+            res = self.client.describe_transit_gateway_peering_attachments(TransitGatewayAttachmentIds=[tgatid])
+            return res 
+        except botocore.exceptions.ClientError as ce:
+            print(ce)
 
     def accept_peering_connection(self,tgatid):
-        res = self.client.accept_transit_gateway_peering_attachment(TransitGatewayAttachmentId=tgatid)
-        return res
+        try:
+            res = self.client.accept_transit_gateway_peering_attachment(TransitGatewayAttachmentId=tgatid)
+            return res
+        except botocore.exceptions.ClientError as ce:
+            raise ce
 
     
