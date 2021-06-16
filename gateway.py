@@ -52,7 +52,7 @@ if __name__ == '__main__':
         #     for _id in _cache.lrange("l_"+args.secdo,0,_cache.llen("l_"+args.secdo)):
         #         _destrtid = helper.get_transit_gateway_route_table_id(args.region,_id)
         #         tgw_obj.enable_propagation(_destrtid,tgatid)
-        if _cache.exists(args.region) and not _cache.hexists(args.region,args.secdo):
+        if _cache.exists(args.region) and _cache.hexists(args.region,args.secdo):
             _destrtid = helper.get_transit_gateway_route_table_id(args.region,args.secdo)
             tgw_obj.enable_propagation(_destrtid,tgatid)
         tgw_obj.associate_vpc_to_secdomain(tgrtid,tgatid)
