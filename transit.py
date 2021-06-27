@@ -138,6 +138,12 @@ class Gateway(object):
         except Exception as e:
             print(e)
 
+    def list_transit_gateways(self):
+        try:
+            res = self.client.describe_transit_gateways()
+            return res['TransitGateways'][0]['TransitGatewayId']
+        except Exception as e:
+            print(e)
 
     def get_all_transit_gateway_attachments(self,tgwid):
         try:
