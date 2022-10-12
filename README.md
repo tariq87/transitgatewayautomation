@@ -15,7 +15,7 @@
 ---------------------------------------------------------------------
 
 
-<p>How to create transit gateway</p>
+<p>How to create transit gateway - new - new</p>
 
 ```python3 gateway.py --name <transitGatewayName> --region <RegionName>```
 
@@ -49,7 +49,7 @@
 ```python3 gateway.py --delete <transit_Gateway_Name> --region <Region_Name>```
 <br></br>
 
-<p>How to create transit gateway peering attachment for inter-region communication</p>
+<p>How to create transit gateway - new - new peering attachment for inter-region communication</p>
 
 ```python3 gateway.py --peer <transit_Gateway_Name1> <transit_Gateway_Name2> --region <Region_Name> --peer-region <Region_Name>```
 <br></br>
